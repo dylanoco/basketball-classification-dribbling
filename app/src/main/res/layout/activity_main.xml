@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <Button
+        android:id="@+id/sensorStartButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Start Sensor" />
+
+    <Button
+        android:id="@+id/sensorStopButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/sensorStartButton"
+        android:text="Stop Sensor" />
+
+    <TextView
+        android:id="@+id/accelerometer_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/sensorStopButton"
+        android:text="accel" />
+
+    <TextView
+        android:id="@+id/gyroscope_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/sensorStopButton"
+        android:layout_marginTop="28dp"
+        android:text="gyro" />
+
+    <TextView
+        android:id="@+id/identify_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/sensorStopButton"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="165dp"
+        android:layout_marginTop="181dp"
+        android:layout_marginEnd="139dp"
+        android:text="Move Predicted: " />
+
+    <TextView
+        android:id="@+id/betweenthelegs_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/sensorStopButton"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="1dp"
+        android:layout_marginTop="101dp"
+        android:layout_marginEnd="303dp"
+        android:text="Move Predicted: " />
+
+    <TextView
+        android:id="@+id/crossover_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/sensorStopButton"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="1dp"
+        android:layout_marginTop="266dp"
+        android:layout_marginEnd="303dp"
+        android:text="Move Predicted: " />
+
+    <TextView
+        android:id="@+id/inandout_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/sensorStopButton"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="1dp"
+        android:layout_marginTop="201dp"
+        android:layout_marginEnd="303dp"
+        android:text="Move Predicted: " />
+
+    <TextView
+        android:id="@+id/idle_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/sensorStopButton"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="1dp"
+        android:layout_marginTop="150dp"
+        android:layout_marginEnd="303dp"
+        android:text="Move Predicted: " />
+
+    <TextView
+        android:id="@+id/orient_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/sensorStopButton"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="15dp"
+        android:layout_marginTop="362dp"
+        android:layout_marginEnd="289dp"
+        android:text="orient: " />
+
+
+</RelativeLayout>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="MyButtonStyle" parent="Widget.AppCompat.Button">
+        <item name="android:textSize">18sp</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:background">@drawable/play_button</item>
+        <item name="android:backgroundTint">@null</item>
+        <!-- Add any other properties you want to customize -->
+    </style>
+    <style name="OverallUI">
+        <item name="android:textSize">18sp</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:background">@drawable/highscore_bar</item>
+    </style>
+</resources>

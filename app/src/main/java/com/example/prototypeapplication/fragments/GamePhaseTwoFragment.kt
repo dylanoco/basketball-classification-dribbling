@@ -1,0 +1,240 @@
+package com.example.prototypeapplication.fragments
+
+import android.content.Intent
+import android.hardware.SensorEventListener
+import android.os.Bundle
+import androidx.fragment.app.Fragment
+import android.view.LayoutInflater
+import android.os.CountDownTimer
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageButton
+import android.widget.TextView
+import com.example.prototypeapplication.GamePhaseActivity
+import com.example.prototypeapplication.R
+import android.content.Context
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorManager
+//import android.os.Handler
+//import android.os.Looper
+import androidx.appcompat.app.AppCompatActivity
+import com.example.prototypeapplication.ml.Model
+import org.tensorflow.lite.DataType
+import org.tensorflow.lite.Interpreter
+import org.tensorflow.lite.Tensor
+import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
+import java.io.File
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import kotlin.math.roundToInt
+
+class GamePhaseTwoFragment : Fragment(), SensorEventListener {
+    private lateinit var countdownTimer: TextView
+    private var isStart: Boolean = false
+    private lateinit var timer: CountDownTimer
+
+
+    private lateinit var sensorManager: SensorManager
+    private lateinit var accelerometer: Sensor
+    private lateinit var gyroscope: Sensor
+    private lateinit var accelerometerTextView: TextView
+    private lateinit var gyroscopeTextView: TextView
+    private lateinit var identifyTextView: TextView
+    private lateinit var crossoverTextView : TextView
+    private lateinit var inandoutTextView : TextView
+    private lateinit var betweenthelegsTextView : TextView
+    private lateinit var idleTextView : TextView
+    private lateinit var model: Model
+
+    private val nTimesteps = 25
+    private val nFeatures = 6
+    private val currentInstanceData = Array(nTimesteps) { FloatArray(nFeatures) }
+    private var timestepIndex = 0
+    private val sensorData = arrayListOf<Float>()
+    private val dribbleClass = arrayListOf<String>("BTL", "Crossover", "Idle","In And Out")
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        model = Model.newInstance(requireActivity())
+
+        sensorManager = requireActivity().getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)!!
+        gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)!!
+
+    }
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        // Inflate the layout for this fragment
+        val view = inflater.inflate(R.layout.fragment_game_phase_two, container, false)
+        val gamePhaseThreeFragment = GamePhaseThreeFragment()
+        val btnStart = view.findViewById<ImageButton>(R.id.button_start)
+
+        countdownTimer = view.findViewById(R.id.countdown_timer)
+
+
+        btnStart.setOnClickListener {
+            startTime()
+            if(!isStart){
+                sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_GAME)
+                sensorManager.registerListener(this, gyroscope, SensorManager.SENSOR_DELAY_GAME)
+            }
+            else{
+                sensorManager.unregisterListener(this)
+            }
+        }
+
+
+        return view
+    }
+
+    private fun startTime() {
+        if(!isStart) {
+            timer = object : CountDownTimer(30000, 1000) {
+                override fun onTick(millisUntilFinished: Long) {
+                    val seconds = millisUntilFinished / 1000
+                    countdownTimer.setText("$seconds")
+                }
+
+                override fun onFinish() {
+                    countdownTimer.setText("done!")
+                }
+            }.start()
+            isStart = true
+        }
+        else{
+            timer.cancel()
+            countdownTimer.setText("30")
+            isStart = false
+        }
+
+    }
+
+    override fun onResume() {
+        super.onResume()
+//        sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_GAME)
+//        sensorManager.registerListener(this, gyroscope, SensorManager.SENSOR_DELAY_GAME)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        sensorManager.unregisterListener(this)
+    }
+
+    private val accelerometerData = FloatArray(3)
+    private val gyroscopeData = FloatArray(3)
+    private var hasAccelData = false
+    private var hasGyroData = false
+
+    private val minValues = floatArrayOf(-28.953999f,
+        -11.058505f,
+        -23.228081f,
+        -4.851873f,
+        -12.815800f,
+        -4.988631f)
+    private val maxValues = floatArrayOf(20.432932f,
+        24.831491f,
+        45.445141f,
+        4.582329f,
+        10.470383f,
+        5.813910f)
+
+    override fun onSensorChanged(event: SensorEvent) {
+        when (event.sensor.type) {
+            Sensor.TYPE_LINEAR_ACCELERATION -> {
+                accelerometerData[0] = event.values[2]
+                accelerometerData[1] = event.values[1]
+                accelerometerData[2] = event.values[0]
+                hasAccelData = true
+//                accelerometerTextView.text = "Accelerometer: X: ${accelerometerData[0]}, Y: ${accelerometerData[1]}, Z: ${accelerometerData[2]}"
+            }
+            Sensor.TYPE_GYROSCOPE -> {
+                gyroscopeData[0] = event.values[2]
+                gyroscopeData[1] = event.values[1]
+                gyroscopeData[2] = event.values[0]
+                hasGyroData = true
+//                gyroscopeTextView.text = "Gyroscope: X: ${gyroscopeData[0]}, Y: ${gyroscopeData[1]}, Z: ${gyroscopeData[2]}"
+            }
+        }
+
+        if (hasAccelData && hasGyroData) {
+            // Combine accelerometerData and gyroscopeData into a single array and process it
+            processSensorData(accelerometerData, gyroscopeData)
+            hasAccelData = false
+            hasGyroData = false
+        }
+    }
+
+    private fun normalizeSensorData(data: FloatArray): FloatArray {
+        return data.indices.map { i ->
+            (data[i] - minValues[i]) / (maxValues[i] - minValues[i])
+        }.toFloatArray()
+    }
+
+    private fun processSensorData(accelerometerData: FloatArray, gyroscopeData: FloatArray) {
+        val combinedData = normalizeSensorData(accelerometerData + gyroscopeData)
+        //val combinedData = accelerometerData + gyroscopeData
+        currentInstanceData[timestepIndex] = combinedData
+        sensorData.clear()
+        timestepIndex++
+
+        if (timestepIndex == nTimesteps) {
+            timestepIndex = 0
+            classifyInstance(reshapeData(currentInstanceData))
+        }
+    }
+
+
+    fun reshapeData(instanceData: Array<FloatArray>): Array<FloatArray> {
+        val reshapedInstanceData = Array(instanceData.size) { FloatArray(6) { 0f } } // Initialize with padding
+        for (i in instanceData.indices) {
+            System.arraycopy(instanceData[i], 0, reshapedInstanceData[i], 0, instanceData[i].size)
+        }
+        return reshapedInstanceData
+    }
+
+    private fun classifyInstance(instanceData: Array<FloatArray>) {
+        val inputTensor = com.example.prototypeapplication.prepareTensor(instanceData)
+        // Run the model
+        val confidenceThreshold = 0.6f
+        val marginThreshold = 0.2f
+        val outputs = model.process(inputTensor)
+        val moveProbabilities = outputs.outputFeature0AsTensorBuffer.floatArray
+
+        val sortedProbIndices = moveProbabilities.indices.sortedByDescending { moveProbabilities[it] }
+        val maxProbIndex = sortedProbIndices[0]
+        val secondMaxProbIndex = sortedProbIndices[1]
+
+        val maxProbability = moveProbabilities[maxProbIndex]
+        val secondMaxProbability = moveProbabilities[secondMaxProbIndex]
+
+        if (maxProbIndex >= 0 && maxProbability >= confidenceThreshold && (maxProbability - secondMaxProbability) >= marginThreshold) {
+            val predictedMove = dribbleClass[maxProbIndex]
+//            identifyTextView.text = predictedMove
+        } else {
+//            identifyTextView.text = "Uncertain"  // or any default/fallback action
+        }
+    }
+
+
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
+        // Handle sensor accuracy changes, if needed
+    }
+}
+
+fun prepareTensor(instanceData: Array<FloatArray>): TensorBuffer {
+    val numBytes = 25 * 6 * 4
+    val byteBuffer = ByteBuffer.allocateDirect(numBytes).order(ByteOrder.nativeOrder())
+
+    instanceData.forEach { timestep ->
+        timestep.forEach { feature ->
+            byteBuffer.putFloat(feature)
+        }
+    }
+
+    return TensorBuffer.createFixedSize(intArrayOf(25, 6), DataType.FLOAT32).apply {
+        loadBuffer(byteBuffer)
+    }
+}
