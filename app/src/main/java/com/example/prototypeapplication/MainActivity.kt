@@ -10,16 +10,11 @@ import android.os.Bundle
 //import android.os.Looper
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import com.example.prototypeapplication.R
 import com.example.prototypeapplication.ml.Model
 import org.tensorflow.lite.DataType
-import org.tensorflow.lite.Interpreter
-import org.tensorflow.lite.Tensor
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
-import java.io.File
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import kotlin.math.roundToInt
 
 class MainActivity : AppCompatActivity(), SensorEventListener {
 
@@ -134,7 +129,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
         if (timestepIndex == nTimesteps) {
             timestepIndex = 0
-            classifyInstance(reshapeData(currentInstanceData))
+//            classifyInstance(reshapeData(currentInstanceData))
         }
     }
 

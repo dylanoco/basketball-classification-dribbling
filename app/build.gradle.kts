@@ -36,11 +36,14 @@ android {
 }
 
 dependencies {
-    // This dependency adds the necessary TF op support.
-//    implementation(libs.tensorflow.lite.v000nightlySNAPSHOT)
     implementation(libs.tensorflow.lite.select.tf.ops)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.tensorflow.lite)
+
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.lifecycle.livedata.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.fragment.ktx)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)

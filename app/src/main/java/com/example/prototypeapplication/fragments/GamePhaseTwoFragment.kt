@@ -1,6 +1,5 @@
 package com.example.prototypeapplication.fragments
 
-import android.content.Intent
 import android.hardware.SensorEventListener
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -10,24 +9,25 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.TextView
-import com.example.prototypeapplication.GamePhaseActivity
+import androidx.fragment.app.activityViewModels
+import java.util.Timer
+import java.util.TimerTask
+
 import com.example.prototypeapplication.R
 import android.content.Context
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorManager
+import android.media.MediaPlayer
 //import android.os.Handler
 //import android.os.Looper
-import androidx.appcompat.app.AppCompatActivity
+import com.example.prototypeapplication.SharedViewModel
 import com.example.prototypeapplication.ml.Model
+import kotlinx.coroutines.delay
 import org.tensorflow.lite.DataType
-import org.tensorflow.lite.Interpreter
-import org.tensorflow.lite.Tensor
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
-import java.io.File
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import kotlin.math.roundToInt
 
 class GamePhaseTwoFragment : Fragment(), SensorEventListener {
     private lateinit var countdownTimer: TextView
@@ -46,13 +46,13 @@ class GamePhaseTwoFragment : Fragment(), SensorEventListener {
     private lateinit var betweenthelegsTextView : TextView
     private lateinit var idleTextView : TextView
     private lateinit var model: Model
+    private lateinit var alarm: MediaPlayer
 
     private val nTimesteps = 25
     private val nFeatures = 6
     private val currentInstanceData = Array(nTimesteps) { FloatArray(nFeatures) }
     private var timestepIndex = 0
     private val sensorData = arrayListOf<Float>()
-    private val dribbleClass = arrayListOf<String>("BTL", "Crossover", "Idle","In And Out")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,13 +71,14 @@ class GamePhaseTwoFragment : Fragment(), SensorEventListener {
         val view = inflater.inflate(R.layout.fragment_game_phase_two, container, false)
         val gamePhaseThreeFragment = GamePhaseThreeFragment()
         val btnStart = view.findViewById<ImageButton>(R.id.button_start)
+        alarm = MediaPlayer.create(requireContext(),R.raw.buzzer_beater_trimmed)
 
         countdownTimer = view.findViewById(R.id.countdown_timer)
 
 
         btnStart.setOnClickListener {
             startTime()
-            if(!isStart){
+            if(isStart){
                 sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_GAME)
                 sensorManager.registerListener(this, gyroscope, SensorManager.SENSOR_DELAY_GAME)
             }
@@ -91,6 +92,7 @@ class GamePhaseTwoFragment : Fragment(), SensorEventListener {
     }
 
     private fun startTime() {
+        val gamePhaseThreeFragment = GamePhaseThreeFragment()
         if(!isStart) {
             timer = object : CountDownTimer(30000, 1000) {
                 override fun onTick(millisUntilFinished: Long) {
@@ -99,7 +101,15 @@ class GamePhaseTwoFragment : Fragment(), SensorEventListener {
                 }
 
                 override fun onFinish() {
-                    countdownTimer.setText("done!")
+                    alarm.start()
+                    val timer = Timer()
+                    timer.schedule(object : TimerTask() {
+                        override fun run() {
+                            alarm.stop()
+                            alarm.release()
+                        }
+                    }, 5000)  // Stop after 5 seconds
+                    makeCurrentFragment(gamePhaseThreeFragment)
                 }
             }.start()
             isStart = true
@@ -110,6 +120,21 @@ class GamePhaseTwoFragment : Fragment(), SensorEventListener {
             isStart = false
         }
 
+    }
+
+    private fun makeCurrentFragment(fragment: Fragment) {
+        val fragmentManager = requireActivity().supportFragmentManager
+        fragmentManager.beginTransaction().apply {
+            setCustomAnimations(
+                R.anim.fade_in,  // enter
+                R.anim.fade_out, // exit
+                R.anim.fade_in,  // popEnter
+                R.anim.fade_out  // popExit
+            )
+            replace(R.id.fl_wrapper, fragment)
+            addToBackStack(null)  // Optional: if you want to add the transaction to the back stack
+            commit()
+        }
     }
 
     override fun onResume() {
@@ -127,6 +152,7 @@ class GamePhaseTwoFragment : Fragment(), SensorEventListener {
     private val gyroscopeData = FloatArray(3)
     private var hasAccelData = false
     private var hasGyroData = false
+    private val sharedViewModel: SharedViewModel by activityViewModels()
 
     private val minValues = floatArrayOf(-28.953999f,
         -11.058505f,
@@ -141,6 +167,9 @@ class GamePhaseTwoFragment : Fragment(), SensorEventListener {
         10.470383f,
         5.813910f)
 
+    private fun sendSensorData(data: FloatArray) {
+        sharedViewModel.addSensorData(data)
+    }
     override fun onSensorChanged(event: SensorEvent) {
         when (event.sensor.type) {
             Sensor.TYPE_LINEAR_ACCELERATION -> {
@@ -175,6 +204,7 @@ class GamePhaseTwoFragment : Fragment(), SensorEventListener {
 
     private fun processSensorData(accelerometerData: FloatArray, gyroscopeData: FloatArray) {
         val combinedData = normalizeSensorData(accelerometerData + gyroscopeData)
+        sendSensorData(combinedData)
         //val combinedData = accelerometerData + gyroscopeData
         currentInstanceData[timestepIndex] = combinedData
         sensorData.clear()
@@ -182,7 +212,7 @@ class GamePhaseTwoFragment : Fragment(), SensorEventListener {
 
         if (timestepIndex == nTimesteps) {
             timestepIndex = 0
-            classifyInstance(reshapeData(currentInstanceData))
+//            sendSensorData(reshapeData(currentInstanceData))
         }
     }
 
@@ -193,29 +223,6 @@ class GamePhaseTwoFragment : Fragment(), SensorEventListener {
             System.arraycopy(instanceData[i], 0, reshapedInstanceData[i], 0, instanceData[i].size)
         }
         return reshapedInstanceData
-    }
-
-    private fun classifyInstance(instanceData: Array<FloatArray>) {
-        val inputTensor = com.example.prototypeapplication.prepareTensor(instanceData)
-        // Run the model
-        val confidenceThreshold = 0.6f
-        val marginThreshold = 0.2f
-        val outputs = model.process(inputTensor)
-        val moveProbabilities = outputs.outputFeature0AsTensorBuffer.floatArray
-
-        val sortedProbIndices = moveProbabilities.indices.sortedByDescending { moveProbabilities[it] }
-        val maxProbIndex = sortedProbIndices[0]
-        val secondMaxProbIndex = sortedProbIndices[1]
-
-        val maxProbability = moveProbabilities[maxProbIndex]
-        val secondMaxProbability = moveProbabilities[secondMaxProbIndex]
-
-        if (maxProbIndex >= 0 && maxProbability >= confidenceThreshold && (maxProbability - secondMaxProbability) >= marginThreshold) {
-            val predictedMove = dribbleClass[maxProbIndex]
-//            identifyTextView.text = predictedMove
-        } else {
-//            identifyTextView.text = "Uncertain"  // or any default/fallback action
-        }
     }
 
 
