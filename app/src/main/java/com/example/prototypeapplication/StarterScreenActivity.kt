@@ -1,5 +1,6 @@
 package com.example.prototypeapplication
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -13,6 +14,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationMenuView
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class StarterScreenActivity : AppCompatActivity() {
+    private var highscore_total = 0
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -22,6 +24,11 @@ class StarterScreenActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+        val value = intent.getIntExtra("hs", highscore_total)
+        println(value)
+        highscore_total = value
+
+
         val homeFragment = HomeFragment()
         val HighScoreFragment = HighScoreFragment()
         val TutorialFragment = TutorialFragment()
@@ -49,5 +56,8 @@ class StarterScreenActivity : AppCompatActivity() {
             replace(R.id.fl_wrapper,fragment)
             commit()
         }
+    fun getHS(): Int {
+        return highscore_total
+    }
 
 }

@@ -15,13 +15,19 @@ import java.util.TimerTask
 
 import com.example.prototypeapplication.R
 import android.content.Context
+import android.content.Intent
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorManager
 import android.media.MediaPlayer
+import android.widget.Button
+import android.widget.FrameLayout
+import androidx.core.content.ContextCompat
+import com.example.prototypeapplication.GamePhaseActivity
 //import android.os.Handler
 //import android.os.Looper
 import com.example.prototypeapplication.SharedViewModel
+import com.example.prototypeapplication.StarterScreenActivity
 import com.example.prototypeapplication.ml.Model
 import kotlinx.coroutines.delay
 import org.tensorflow.lite.DataType
@@ -45,7 +51,6 @@ class GamePhaseTwoFragment : Fragment(), SensorEventListener {
     private lateinit var inandoutTextView : TextView
     private lateinit var betweenthelegsTextView : TextView
     private lateinit var idleTextView : TextView
-    private lateinit var model: Model
     private lateinit var alarm: MediaPlayer
 
     private val nTimesteps = 25
@@ -53,10 +58,10 @@ class GamePhaseTwoFragment : Fragment(), SensorEventListener {
     private val currentInstanceData = Array(nTimesteps) { FloatArray(nFeatures) }
     private var timestepIndex = 0
     private val sensorData = arrayListOf<Float>()
+    private var highscore_total = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        model = Model.newInstance(requireActivity())
 
         sensorManager = requireActivity().getSystemService(Context.SENSOR_SERVICE) as SensorManager
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)!!
@@ -69,8 +74,14 @@ class GamePhaseTwoFragment : Fragment(), SensorEventListener {
     ): View? {
         // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_game_phase_two, container, false)
-        val gamePhaseThreeFragment = GamePhaseThreeFragment()
         val btnStart = view.findViewById<ImageButton>(R.id.button_start)
+        val intent = Intent(activity, StarterScreenActivity::class.java)
+        val btnBack = view.findViewById<Button>(R.id.back_button2_id)
+
+        val activityFrame = activity?.findViewById<FrameLayout>(R.id.fl_wrapper)
+        val backgroundColor = ContextCompat.getColor(requireContext(), R.color.bg_main)
+        val backgroundColorActive = ContextCompat.getColor(requireContext(), R.color.bg_active)
+
         alarm = MediaPlayer.create(requireContext(),R.raw.buzzer_beater_trimmed)
 
         countdownTimer = view.findViewById(R.id.countdown_timer)
@@ -79,12 +90,32 @@ class GamePhaseTwoFragment : Fragment(), SensorEventListener {
         btnStart.setOnClickListener {
             startTime()
             if(isStart){
+                btnStart.setImageResource(R.drawable.stop_button)
                 sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_GAME)
                 sensorManager.registerListener(this, gyroscope, SensorManager.SENSOR_DELAY_GAME)
+
+                //change activity bg to orange from white
+                activityFrame?.setBackgroundColor(backgroundColorActive)
+                //hide fragment visibility of back button
+                btnBack.isClickable = false
+                btnBack.visibility = View.INVISIBLE
             }
             else{
+                btnStart.setImageResource(R.drawable.start_button)
+                activityFrame?.setBackgroundColor(backgroundColor)
+                btnBack.isClickable = true
+                btnBack.visibility = View.VISIBLE
                 sensorManager.unregisterListener(this)
             }
+        }
+        btnBack.setOnClickListener {
+            val activityTextView = activity?.findViewById<TextView>(R.id.highscoreNumber)
+
+            if (activityTextView != null) {
+                println(activityTextView.text)
+                intent.putExtra("hs",activityTextView.text.toString().toInt())
+            }
+            startActivity(intent)
         }
 
 
@@ -94,7 +125,7 @@ class GamePhaseTwoFragment : Fragment(), SensorEventListener {
     private fun startTime() {
         val gamePhaseThreeFragment = GamePhaseThreeFragment()
         if(!isStart) {
-            timer = object : CountDownTimer(30000, 1000) {
+            timer = object : CountDownTimer(10000, 1000) {
                 override fun onTick(millisUntilFinished: Long) {
                     val seconds = millisUntilFinished / 1000
                     countdownTimer.setText("$seconds")
@@ -108,7 +139,7 @@ class GamePhaseTwoFragment : Fragment(), SensorEventListener {
                             alarm.stop()
                             alarm.release()
                         }
-                    }, 5000)  // Stop after 5 seconds
+                    }, 2000)  // Stop after 5 seconds
                     makeCurrentFragment(gamePhaseThreeFragment)
                 }
             }.start()
@@ -116,7 +147,7 @@ class GamePhaseTwoFragment : Fragment(), SensorEventListener {
         }
         else{
             timer.cancel()
-            countdownTimer.setText("30")
+            countdownTimer.setText("10")
             isStart = false
         }
 
@@ -126,13 +157,13 @@ class GamePhaseTwoFragment : Fragment(), SensorEventListener {
         val fragmentManager = requireActivity().supportFragmentManager
         fragmentManager.beginTransaction().apply {
             setCustomAnimations(
-                R.anim.fade_in,  // enter
-                R.anim.fade_out, // exit
-                R.anim.fade_in,  // popEnter
-                R.anim.fade_out  // popExit
+                R.anim.fade_in,
+                R.anim.fade_out,
+                R.anim.fade_in,
+                R.anim.fade_out
             )
             replace(R.id.fl_wrapper, fragment)
-            addToBackStack(null)  // Optional: if you want to add the transaction to the back stack
+            addToBackStack(null)
             commit()
         }
     }
@@ -218,7 +249,7 @@ class GamePhaseTwoFragment : Fragment(), SensorEventListener {
 
 
     fun reshapeData(instanceData: Array<FloatArray>): Array<FloatArray> {
-        val reshapedInstanceData = Array(instanceData.size) { FloatArray(6) { 0f } } // Initialize with padding
+        val reshapedInstanceData = Array(instanceData.size) { FloatArray(6) { 0f } }
         for (i in instanceData.indices) {
             System.arraycopy(instanceData[i], 0, reshapedInstanceData[i], 0, instanceData[i].size)
         }
@@ -227,7 +258,6 @@ class GamePhaseTwoFragment : Fragment(), SensorEventListener {
 
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-        // Handle sensor accuracy changes, if needed
     }
 }
 

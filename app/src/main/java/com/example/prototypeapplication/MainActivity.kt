@@ -161,7 +161,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
             val predictedMove = dribbleClass[maxProbIndex]
             identifyTextView.text = predictedMove
         } else {
-            identifyTextView.text = "Uncertain"  // or any default/fallback action
+            identifyTextView.text = "Uncertain"
         }
     }
 

@@ -36,6 +36,22 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="0.235"
             tools:ignore="SpeakableTextPresentCheck" />
+
+        <TextView
+            android:id="@+id/highscoreNumber"
+            android:layout_width="236dp"
+            android:layout_height="45dp"
+            android:fontFamily="@font/roboto_bold"
+            android:text="TextView"
+            android:textAlignment="center"
+            android:textColor="@color/primary_100"
+            android:textSize="34sp"
+            app:layout_constraintBottom_toBottomOf="@+id/highscore_bar"
+            app:layout_constraintEnd_toEndOf="@+id/highscore_bar"
+            app:layout_constraintHorizontal_bias="0.645"
+            app:layout_constraintStart_toStartOf="@+id/highscore_bar"
+            app:layout_constraintTop_toTopOf="@+id/highscore_bar"
+            app:layout_constraintVertical_bias="0.403" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </FrameLayout>

@@ -15,10 +15,10 @@
             android:id="@+id/countdown_timer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:fontFamily="@font/roboto"
-            android:text="30"
+            android:fontFamily="@font/futura_medium_bt"
+            android:text="10"
             android:textColor="#000000"
-            android:textSize="96sp"
+            android:textSize="128sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.498"
@@ -26,29 +26,34 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="0.432" />
 
-        <ImageView
-            android:id="@+id/highscore_bar"
-            style="@style/OverallUI"
-            android:layout_width="380dp"
-            android:layout_height="91dp"
-            android:layout_marginTop="16dp"
-            android:contentDescription="bar that displays the high score"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.493"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
         <ImageButton
             android:id="@+id/button_start"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:background="@null"
             android:contentDescription="Start Button to begin the game"
             android:src="@drawable/start_button"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/countdown_timer"
-            app:layout_constraintVertical_bias="0.384" />
+            app:layout_constraintVertical_bias="0.371" />
+
+        <Button
+            android:id="@+id/back_button2_id"
+            android:layout_width="114dp"
+            android:layout_height="66dp"
+            android:backgroundTint="#EF8100"
+            android:fontFamily="@font/roboto_bold"
+            android:text="Back"
+            android:textSize="24sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.03"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.15" />
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </FrameLayout>
