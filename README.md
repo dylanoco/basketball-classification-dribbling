@@ -19,5 +19,5 @@ The mobile phone must be attached to the left arm with the armband, with the pho
 
 ## How to install
 
-I have already exported the .apk file. To install the application, simply download and run this APK file on your android device !
+I have already exported the .apk file. To install the application, simply enter the 'AndroidTest/Debug' folder, and download and run this APK file on your android device !
 
